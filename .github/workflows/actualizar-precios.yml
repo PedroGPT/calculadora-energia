@@ -1,6 +1,9 @@
 name: Actualizar precios de referencia
 
 on:
+permissions:
+  contents: write
+
   schedule:
     - cron: '0 22 * * *' # Ejecuta todos los días a las 23:00 (UTC+1)
   workflow_dispatch: # Permite ejecutarlo manualmente
