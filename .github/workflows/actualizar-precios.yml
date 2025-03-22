@@ -1,12 +1,12 @@
 name: Actualizar precios de referencia
 
 on:
-permissions:
-  contents: write
-
   schedule:
     - cron: '0 22 * * *' # Ejecuta todos los días a las 23:00 (UTC+1)
   workflow_dispatch: # Permite ejecutarlo manualmente
+
+permissions:
+  contents: write
 
 jobs:
   actualizar-precios:
@@ -34,6 +34,3 @@ jobs:
           git add src/preciosReferencia.json
           git commit -m "Actualizar precios de referencia automáticamente"
           git push
-
-
-    
