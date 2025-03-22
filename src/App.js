@@ -1,15 +1,18 @@
+import preciosReferencia from './preciosReferencia.json';
+
 import React, { useState } from "react";
 
 const CalculadoraAhorro = () => {
   // Precios de referencia que puedes cambiar tú
-  const [preciosReferencia, setPreciosReferencia] = useState({
-    P1: 0.18,
-    P2: 0.16,
-    P3: 0.14,
-    P4: 0.12,
-    P5: 0.10,
-    P6: 0.08,
-  });
+  const preciosReferenciaFormateados = {
+    P1: preciosReferencia[0],
+    P2: preciosReferencia[1],
+    P3: preciosReferencia[2],
+    P4: preciosReferencia[3],
+    P5: preciosReferencia[4],
+    P6: preciosReferencia[5],
+  };
+  
 
   // Precios editables para el cliente
   const [preciosCliente, setPreciosCliente] = useState({ P1: "", P2: "", P3: "", P4: "", P5: "", P6: "" });
@@ -60,35 +63,31 @@ const CalculadoraAhorro = () => {
           </tr>
         </thead>
         <tbody>
-          {Object.keys(preciosReferencia).map((periodo) => (
-            <tr key={periodo}>
-              <td>{periodo}</td>
-              <td>
-                <input
-                  type="number"
-                  value={preciosReferencia[periodo]}
-                  onChange={(e) => setPreciosReferencia({ ...preciosReferencia, [periodo]: e.target.value })}
-                  step="0.0001"
-                />
-              </td>
-              <td>
-                <input
-                  type="number"
-                  value={preciosCliente[periodo]}
-                  onChange={(e) => handlePrecioClienteChange(e, periodo)}
-                  step="0.0001"
-                />
-              </td>
-              <td>
-                <input
-                  type="number"
-                  value={consumos[periodo]}
-                  onChange={(e) => handleConsumoChange(e, periodo)}
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
+  {Object.keys(preciosReferencia).map((periodo) => (
+    <tr key={periodo}>
+      <td>{periodo}</td>
+      <td>
+        <span>{Number(preciosReferencia[periodo]).toFixed(6)}</span>
+      </td>
+      <td>
+        <input
+          type="number"
+          value={preciosCliente[periodo]}
+          onChange={(e) => handlePrecioClienteChange(e, periodo)}
+          step="0.0001"
+        />
+      </td>
+      <td>
+        <input
+          type="number"
+          value={consumos[periodo]}
+          onChange={(e) => handleConsumoChange(e, periodo)}
+        />
+      </td>
+    </tr>
+  ))}
+</tbody>
+
       </table>
       <button onClick={calcularAhorro} style={{ marginTop: "10px", padding: "10px", fontSize: "16px" }}>
         Calcular Ahorro
@@ -101,7 +100,7 @@ const CalculadoraAhorro = () => {
 export default CalculadoraAhorro;
 
 
-
+np
 
 
 
