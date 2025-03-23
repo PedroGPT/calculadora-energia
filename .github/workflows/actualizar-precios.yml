@@ -1,27 +1,40 @@
-const xlsx = require('xlsx');
-const fs = require('fs');
-const path = require('path');
+name: Actualizar precios desde Excel
 
-// Ruta del archivo Excel en la raíz del proyecto
-const excelPath = path.join(__dirname, 'PreciosP.xlsx');
+on:
+  schedule:
+    - cron: '0 22 * * *'  # Ejecutar a las 23:00 en España (UTC+1 → 22h UTC)
+  workflow_dispatch:      # Permite ejecución manual desde GitHub
 
-// Leer el archivo Excel
-const workbook = xlsx.readFile(excelPath);
-const sheet = workbook.Sheets['3.0TD COMP'];
+jobs:
+  actualizar-precios:
+    runs-on: ubuntu-latest
 
-const periodos = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'];
-const precios = {};
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v3
 
-// Extraer los precios para cada periodo
-periodos.forEach((periodo, index) => {
-  const celda = `N${index + 2}`;
-  const valor = sheet[celda] ? Number(sheet[celda].v).toFixed(6) : '0.000000';
-  precios[periodo] = valor;
-});
+      - name: Instalar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-// Guardar como JSON
-const jsonPath = path.join(__dirname, 'src', 'preciosReferencia.json');
-fs.writeFileSync(jsonPath, JSON.stringify(precios, null, 2));
+      - name: Instalar dependencias
+        run: npm install
 
-console.log('✅ Precios actualizados correctamente:');
-console.log(precios);
+      - name: Ejecutar script para actualizar precios
+        run: node actualizarPrecios.js
+
+      - name: Configurar Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Hacer commit si hay cambios
+        run: |
+          git add src/preciosReferencia.json
+          if git diff --cached --quiet; then
+            echo "No hay cambios en precios, no se hace commit."
+          else
+            git commit -m "📊 Actualización automática de precios desde Excel"
+            git push
+          fi
