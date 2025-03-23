@@ -2,35 +2,32 @@ name: Actualizar precios de referencia
 
 on:
   schedule:
-    - cron: '0 22 * * *' # Ejecuta todos los días a las 23:00 (UTC+1)
-  workflow_dispatch: # Permite ejecutarlo manualmente
-
-permissions:
-  contents: write
+    - cron: '0 22 * * *'  # Todos los días a las 23h hora local en España (22h UTC)
+  workflow_dispatch:
 
 jobs:
-  actualizar-precios:
+  update-prices:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clonar repositorio
+      - name: Checkout del repositorio
         uses: actions/checkout@v3
 
       - name: Configurar Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: '20'
 
       - name: Instalar dependencias
         run: npm install
 
       - name: Ejecutar script para actualizar precios
-        run: node src/leerExcel.js
+        run: node actualizarPrecios.js
 
-      - name: Confirmar cambios en preciosReferencia.json
+      - name: Commit y push si hay cambios
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add src/preciosReferencia.json
-          git commit -m "Actualizar precios de referencia automáticamente"
+          git commit -m "Actualizar precios automáticamente" || echo "No hay cambios"
           git push
