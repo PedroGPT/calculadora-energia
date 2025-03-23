@@ -2,8 +2,8 @@ name: Actualizar precios desde Excel
 
 on:
   schedule:
-    - cron: '0 22 * * *'  # Ejecutar a las 23:00 en España (UTC+1 → 22h UTC)
-  workflow_dispatch:      # Permite ejecución manual desde GitHub
+    - cron: '0 22 * * *' # Todos los días a las 23:00 hora española (22:00 UTC)
+  workflow_dispatch: # Permite ejecución manual
 
 jobs:
   actualizar-precios:
@@ -11,30 +11,31 @@ jobs:
 
     steps:
       - name: Clonar repositorio
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Instalar Node.js
-        uses: actions/setup-node@v3
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
       - name: Instalar dependencias
         run: npm install
 
-      - name: Ejecutar script para actualizar precios
+      - name: Ejecutar script de actualización de precios
         run: node actualizarPrecios.js
 
-      - name: Configurar Git
+      - name: Confirmar si hubo cambios
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-      - name: Hacer commit si hay cambios
-        run: |
-          git add src/preciosReferencia.json
-          if git diff --cached --quiet; then
-            echo "No hay cambios en precios, no se hace commit."
+          git config user.name "PedroGPT"
+          git config user.email "actions@github.com"
+          if git diff --quiet; then
+            echo "Sin cambios, forzando commit vacío para redeploy"
+            git commit --allow-empty -m "Forzar redeploy en Vercel"
           else
-            git commit -m "📊 Actualización automática de precios desde Excel"
-            git push
+            echo "Hay cambios, haciendo commit normal"
+            git add src/preciosReferencia.json
+            git commit -m "Actualizar precios desde Excel"
           fi
+          git push
