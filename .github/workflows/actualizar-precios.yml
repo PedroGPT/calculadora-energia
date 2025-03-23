@@ -1,33 +1,27 @@
-name: Actualizar precios de referencia
+const xlsx = require('xlsx');
+const fs = require('fs');
+const path = require('path');
 
-on:
-  schedule:
-    - cron: '0 22 * * *'  # Todos los días a las 23h hora local en España (22h UTC)
-  workflow_dispatch:
+// Ruta del archivo Excel en la raíz del proyecto
+const excelPath = path.join(__dirname, 'PreciosP.xlsx');
 
-jobs:
-  update-prices:
-    runs-on: ubuntu-latest
+// Leer el archivo Excel
+const workbook = xlsx.readFile(excelPath);
+const sheet = workbook.Sheets['3.0TD COMP'];
 
-    steps:
-      - name: Checkout del repositorio
-        uses: actions/checkout@v3
+const periodos = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'];
+const precios = {};
 
-      - name: Configurar Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
+// Extraer los precios para cada periodo
+periodos.forEach((periodo, index) => {
+  const celda = `N${index + 2}`;
+  const valor = sheet[celda] ? Number(sheet[celda].v).toFixed(6) : '0.000000';
+  precios[periodo] = valor;
+});
 
-      - name: Instalar dependencias
-        run: npm install
+// Guardar como JSON
+const jsonPath = path.join(__dirname, 'src', 'preciosReferencia.json');
+fs.writeFileSync(jsonPath, JSON.stringify(precios, null, 2));
 
-      - name: Ejecutar script para actualizar precios
-        run: node actualizarPrecios.js
-
-      - name: Commit y push si hay cambios
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add src/preciosReferencia.json
-          git commit -m "Actualizar precios automáticamente" || echo "No hay cambios"
-          git push
+console.log('✅ Precios actualizados correctamente:');
+console.log(precios);
