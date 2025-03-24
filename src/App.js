@@ -1,51 +1,54 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import preciosReferencia from './preciosReferencia.json';
+import './App.css';
 
-const CalculadoraAhorro = () => {
-  // Precios editables para el cliente
-  const [preciosCliente, setPreciosCliente] = useState({
-    P1: "", P2: "", P3: "", P4: "", P5: "", P6: ""
-  });
-
-  // Consumos ingresados por el cliente
-  const [consumos, setConsumos] = useState({
-    P1: "", P2: "", P3: "", P4: "", P5: "", P6: ""
-  });
-
-  // Resultado del cálculo de ahorro
+function App() {
+  const [preciosCliente, setPreciosCliente] = useState(Array(6).fill(''));
+  const [consumos, setConsumos] = useState(Array(6).fill(''));
   const [ahorro, setAhorro] = useState(null);
+  const [costeOriginal, setCosteOriginal] = useState(null);
+  const [porcentajeAhorro, setPorcentajeAhorro] = useState(null);
 
-  // Manejar cambios en los precios del cliente
-  const handlePrecioClienteChange = (e, periodo) => {
-    setPreciosCliente({ ...preciosCliente, [periodo]: e.target.value });
+  const handlePrecioChange = (index, value) => {
+    const nuevosPrecios = [...preciosCliente];
+    nuevosPrecios[index] = value;
+    setPreciosCliente(nuevosPrecios);
   };
 
-  // Manejar cambios en los consumos
-  const handleConsumoChange = (e, periodo) => {
-    setConsumos({ ...consumos, [periodo]: e.target.value });
+  const handleConsumoChange = (index, value) => {
+    const nuevosConsumos = [...consumos];
+    nuevosConsumos[index] = value;
+    setConsumos(nuevosConsumos);
   };
 
-  // Calcular el ahorro
   const calcularAhorro = () => {
     let ahorroTotal = 0;
+    let costeTotalOriginal = 0;
 
-    Object.keys(preciosReferencia).forEach((periodo) => {
-      const precioRef = parseFloat(preciosReferencia[periodo]);
-      const precioCliente = parseFloat(preciosCliente[periodo]) || 0;
-      const consumo = parseFloat(consumos[periodo]) || 0;
+    for (let i = 0; i < 6; i++) {
+      const precioRef = parseFloat(preciosReferencia[`P${i + 1}`]);
+      const precioCli = parseFloat(preciosCliente[i]);
+      const consumo = parseFloat(consumos[i]);
 
-      const costoRef = precioRef * consumo;
-      const costoCliente = precioCliente * consumo;
-      ahorroTotal += costoCliente - costoRef;
-    });
+      if (!isNaN(precioRef) && !isNaN(precioCli) && !isNaN(consumo)) {
+        const costeOriginal = precioCli * consumo;
+        const costeNuevo = precioRef * consumo;
+        ahorroTotal += costeOriginal - costeNuevo;
+        costeTotalOriginal += costeOriginal;
+      }
+    }
 
-    setAhorro(ahorroTotal.toFixed(2));
+    const porcentaje = costeTotalOriginal !== 0 ? (ahorroTotal / costeTotalOriginal) * 100 : 0;
+
+    setAhorro(ahorroTotal);
+    setCosteOriginal(costeTotalOriginal);
+    setPorcentajeAhorro(porcentaje);
   };
 
   return (
-    <div style={{ textAlign: "center" }}>
+    <div className="App">
       <h1>Calculadora de Ahorro Energético</h1>
-      <table style={{ margin: "auto", borderCollapse: "collapse" }}>
+      <table>
         <thead>
           <tr>
             <th>Periodo</th>
@@ -55,54 +58,47 @@ const CalculadoraAhorro = () => {
           </tr>
         </thead>
         <tbody>
-          {Object.keys(preciosReferencia).map((periodo) => (
-            <tr key={periodo}>
-              <td>{periodo}</td>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <tr key={i}>
+              <td>{`P${i + 1}`}</td>
               <td>
                 <input
                   type="text"
+                  value={preciosReferencia[`P${i + 1}`]}
                   readOnly
-                  value={parseFloat(preciosReferencia[periodo]).toFixed(6)}
-                  style={{
-                    backgroundColor: "#eee",
-                    border: "1px solid #ccc",
-                    textAlign: "center",
-                    width: "100px"
-                  }}
                 />
               </td>
               <td>
                 <input
                   type="number"
-                  value={preciosCliente[periodo]}
-                  onChange={(e) => handlePrecioClienteChange(e, periodo)}
-                  step="0.0001"
+                  value={preciosCliente[i]}
+                  onChange={(e) => handlePrecioChange(i, e.target.value)}
                 />
               </td>
               <td>
                 <input
                   type="number"
-                  value={consumos[periodo]}
-                  onChange={(e) => handleConsumoChange(e, periodo)}
+                  value={consumos[i]}
+                  onChange={(e) => handleConsumoChange(i, e.target.value)}
                 />
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-
-      <button
-        onClick={calcularAhorro}
-        style={{ marginTop: "10px", padding: "10px", fontSize: "16px" }}
-      >
-        Calcular Ahorro
-      </button>
+      <button onClick={calcularAhorro}>Calcular Ahorro</button>
 
       {ahorro !== null && (
-        <h2>Ahorro estimado: €{ahorro} al mes</h2>
+        <div style={{ marginTop: '20px', fontWeight: 'bold' }}>
+          Ahorro total: {ahorro.toFixed(2)} €
+          <br />
+          Coste total original del cliente: {costeOriginal.toFixed(2)} €
+          <br />
+          Porcentaje de ahorro: {porcentajeAhorro.toFixed(2)}%
+        </div>
       )}
     </div>
   );
-};
+}
 
-export default CalculadoraAhorro;
+export default App;
