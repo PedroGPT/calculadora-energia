@@ -1,0 +1,16 @@
+.header {
+  background-color: white; /* Fondo blanco para que el logo transparente se vea bien */
+  padding: 20px;
+  text-align: center;
+}
+
+.logo {
+  width: 200px; /* Ajusta el tamaño del logo */
+  height: auto;
+  object-fit: contain;
+}
+
+
+
+
+  

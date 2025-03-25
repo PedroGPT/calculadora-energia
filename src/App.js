@@ -1,16 +1,32 @@
-import React, { useState } from 'react';
-import preciosReferencia from './preciosReferencia.json';
+import React, { useState, useEffect } from 'react';
 import './App.css';
+import preciosReferencia from './preciosReferencia.json';
+import { generarPDF } from './generarPDF';
 
 function App() {
-  const [preciosCliente, setPreciosCliente] = useState(Array(6).fill(''));
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [precios, setPrecios] = useState([]);
+  const [clientePrecios, setClientePrecios] = useState(Array(6).fill(''));
   const [consumos, setConsumos] = useState(Array(6).fill(''));
   const [resultados, setResultados] = useState(null);
+  const [mostrarGuardar, setMostrarGuardar] = useState(false);
+
+  useEffect(() => {
+    const preciosArray = [
+      preciosReferencia.P1,
+      preciosReferencia.P2,
+      preciosReferencia.P3,
+      preciosReferencia.P4,
+      preciosReferencia.P5,
+      preciosReferencia.P6,
+    ];
+    setPrecios(preciosArray);
+  }, []);
 
   const handlePrecioChange = (index, value) => {
-    const nuevosPrecios = [...preciosCliente];
+    const nuevosPrecios = [...clientePrecios];
     nuevosPrecios[index] = value;
-    setPreciosCliente(nuevosPrecios);
+    setClientePrecios(nuevosPrecios);
   };
 
   const handleConsumoChange = (index, value) => {
@@ -20,62 +36,129 @@ function App() {
   };
 
   const calcularAhorro = () => {
-    let costeActual = 0;
-    let costeFuturo = 0;
+    let consumoTotal = 0;
+    let importeTotal = 0;
+    let importeFuturo = 0;
 
     for (let i = 0; i < 6; i++) {
-      const precioCliente = parseFloat(preciosCliente[i]) || 0;
-      const precioReferencia = parseFloat(preciosReferencia[`P${i + 1}`]) || 0;
-      const consumo = parseFloat(consumos[i]) || 0;
+      const consumo = parseFloat(consumos[i].replace(',', '.')) || 0;
+      const precioCliente = parseFloat(clientePrecios[i].replace(',', '.')) || 0;
+      const precioFuturo = parseFloat(precios[i]) || 0;
 
-      costeActual += precioCliente * consumo;
-      costeFuturo += precioReferencia * consumo;
+      consumoTotal += consumo;
+      importeTotal += consumo * precioCliente;
+      importeFuturo += consumo * precioFuturo;
     }
 
-    const ahorro = costeActual - costeFuturo;
-    const porcentajeAhorro = costeActual > 0 ? (ahorro / costeActual) * 100 : 0;
+    const ahorro = importeTotal - importeFuturo;
+    const porcentaje = importeTotal > 0 ? (ahorro / importeTotal) * 100 : 0;
 
     setResultados({
-      costeActual: costeActual.toFixed(2),
-      costeFuturo: costeFuturo.toFixed(2),
+      consumoTotal: consumoTotal.toFixed(2),
+      importeTotal: importeTotal.toFixed(2),
+      importeFuturo: importeFuturo.toFixed(2),
       ahorro: ahorro.toFixed(2),
-      porcentajeAhorro: porcentajeAhorro.toFixed(2)
+      porcentaje: porcentaje.toFixed(2),
     });
+
+    setMostrarGuardar(true);
   };
 
-  return (
-    <div className="App" style={{ padding: '2rem', fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: 'auto' }}>
-      <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Calculadora de Ahorro Energético</h1>
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-        <thead>
-          <tr>
-            <th>Periodo</th>
-            <th>Precio Referencia<br/> (€ / kWh)</th>
-            <th>Precio Cliente<br/> (€ / kWh)</th>
-            <th>Consumo<br/> (kWh)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {[...Array(6)].map((_, i) => (
-            <tr key={i}>
-              <td style={{ textAlign: 'center' }}>P{i + 1}</td>
-              <td><input type="number" value={preciosReferencia[`P${i + 1}`]} readOnly style={{ width: '100%' }} /></td>
-              <td><input type="number" value={preciosCliente[i]} onChange={(e) => handlePrecioChange(i, e.target.value)} style={{ width: '100%' }} /></td>
-              <td><input type="number" value={consumos[i]} onChange={(e) => handleConsumoChange(i, e.target.value)} style={{ width: '100%' }} /></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <button onClick={calcularAhorro} style={{ padding: '0.6rem 1.2rem', fontSize: '1rem', cursor: 'pointer' }}>
-        Calcular Ahorro
-      </button>
+  const guardarYCerrar = () => {
+    alert('Datos guardados correctamente.');
+    setMostrarFormulario(false);
+    setMostrarGuardar(false);
+  };
 
-      {resultados && (
-        <div style={{ marginTop: '2rem', textAlign: 'left', fontSize: '1.1rem' }}>
-          <p><strong>Coste actual energía cliente:</strong> {resultados.costeActual} €</p>
-          <p><strong>Coste futuro energía cliente:</strong> {resultados.costeFuturo} €</p>
-          <p><strong>Ahorro total:</strong> {resultados.ahorro} €</p>
-          <p><strong>Porcentaje de ahorro:</strong> {resultados.porcentajeAhorro} %</p>
+  const datosParaPDF = precios.map((precio, i) => ({
+    precioFuturo: parseFloat(precio).toFixed(6),
+    precioCliente: clientePrecios[i],
+    consumo: consumos[i]
+  }));
+
+  return (
+    <div className="app">
+      <header className="header">
+        <img src="/logo.png" alt="Logo ECE Consultores" className="logo" />
+      </header>
+
+      {!mostrarFormulario && (
+        <>
+          <h1 className="titulo">Calculadora de Ahorro Energético</h1>
+          <button className="boton-principal" onClick={() => setMostrarFormulario(true)}>
+            Añadir Precios y Consumos
+          </button>
+        </>
+      )}
+
+      {mostrarFormulario && (
+        <div className="formulario">
+          <table className="tabla">
+            <thead>
+              <tr>
+                <th>Periodo</th>
+                <th>Precios a Futuro (kWh)</th>
+                <th>Precio Factura (kWh)</th>
+                <th>Consumo (kWh)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {precios.map((precio, index) => (
+                <tr key={index}>
+                  <td className="celda-fija">Periodo {index + 1}</td>
+                  <td className="celda-fija">{parseFloat(precio).toFixed(6)}</td>
+                  <td>
+                    <input
+                      type="text"
+                      value={clientePrecios[index]}
+                      onChange={(e) => handlePrecioChange(index, e.target.value)}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      value={consumos[index]}
+                      onChange={(e) => handleConsumoChange(index, e.target.value)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="centrado">
+            <button className="boton-calcular" onClick={calcularAhorro}>
+              Calcular Ahorro
+            </button>
+          </div>
+
+          {mostrarGuardar && (
+            <div className="centrado">
+              <button className="boton-guardar" onClick={guardarYCerrar}>
+                Guardar
+              </button>
+            </div>
+          )}
+
+          {resultados && (
+            <div className="resultados">
+              <h2>Ahorro Estimado:</h2>
+              <p><strong>Consumo Total (kWh):</strong> {resultados.consumoTotal}</p>
+              <p><strong>Importe Total (€):</strong> {resultados.importeTotal}</p>
+              <p><strong>Importe con Precios a Futuro (€):</strong> {resultados.importeFuturo}</p>
+              <p style={{ color: resultados.ahorro >= 0 ? 'green' : 'red' }}>
+                <strong>Total Ahorro (€):</strong> {resultados.ahorro}
+              </p>
+              <p style={{ color: resultados.porcentaje >= 0 ? 'green' : 'red' }}>
+                <strong>Porcentaje de Ahorro (%):</strong> {resultados.porcentaje}
+              </p>
+              <div className="contenedor-derecha">
+                <button className="boton-pdf" onClick={() => generarPDF(datosParaPDF, resultados)}>
+                  Generar Informe
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
